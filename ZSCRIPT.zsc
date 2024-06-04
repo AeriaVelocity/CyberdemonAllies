@@ -6,7 +6,7 @@ class FriendOfCyber : DoomPlayer
 		Player.StartItem "CyberdemonRetractor";
 		Player.StartItem "Shotgun";
 		Player.StartItem "Shell", 24;
-		Player.WeaponSlot 1, "CyberdemonSummoner", "CyberdemonRetractor";
+		Player.WeaponSlot 1, "CyberdemonRetractor", "CyberdemonSummoner";
 		Player.WeaponSlot 2, "Shotgun";
 		Player.WeaponSlot 3, "SuperShotgun";
 		Player.WeaponSlot 4, "Chaingun";
@@ -107,6 +107,8 @@ class CyberdemonSummoner : Weapon
 	Default
 	{
 		Weapon.KickBack 1000;
+		Weapon.SelectionOrder 1;
+		Weapon.SlotPriority 2;
 		Tag "Cyberdemon Summoner";
 	}
 	States
@@ -145,6 +147,8 @@ class CyberdemonRetractor : Weapon replaces Chainsaw
 	Default
 	{
 		Weapon.Kickback 0;
+		Weapon.SelectionOrder 2;
+		Weapon.SlotPriority 1;
 		Weapon.UpSound "weapons/sawup";
 		Weapon.ReadySound "weapons/sawidle";
 		Tag "Cyberdemon Retractor";
