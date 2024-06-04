@@ -1,0 +1,188 @@
+class FriendOfCyber : DoomPlayer
+{
+	Default
+	{
+		Player.StartItem "CyberdemonSummoner";
+		Player.StartItem "CyberdemonRetractor";
+		Player.StartItem "Shotgun";
+		Player.StartItem "Shell", 24;
+		Player.WeaponSlot 1, "CyberdemonSummoner", "CyberdemonRetractor";
+		Player.WeaponSlot 2, "Shotgun";
+		Player.WeaponSlot 3, "SuperShotgun";
+		Player.WeaponSlot 4, "Chaingun";
+		Player.WeaponSlot 5, "RocketLauncher";
+		Player.WeaponSlot 6, "PlasmaRifle";
+		Player.WeaponSlot 7, "BFG9000";
+	}
+}
+
+class CyberdemonSpawner : Actor
+{
+	Default
+	{
+		Projectile;
+		Speed 30;
+		Scale 0.5;
+		Height 50;
+		Radius 16;
+		-NOGRAVITY
+		SeeSound "weapons/rocklf";
+	}
+	States
+	{
+		Spawn:
+			CYBR G -1;
+			Stop;
+		Death:
+			TNT1 A 1 A_SpawnItem("CyberdemonAlly");
+			Stop;
+	}
+}
+
+class CyberdemonAlly : Cyberdemon
+{
+	Default
+	{
+		+FRIENDLY
+		Scale 0.5;
+		Height 50;
+		Radius 16;
+		Health 500;
+		PainChance "Retract", 256;
+	}
+	action bool TargetIsPlayer()
+	{
+		return target && target.GetClassName() == "FriendOfCyber";
+	}
+	action void ThrowWhatever(class<Actor> enemy_projectile, class<Actor> friend_projectile)
+	{
+		if (TargetIsPlayer()) {
+			let projectile = A_SpawnProjectile(friend_projectile);
+			let distance = level.Vec3Diff(Pos, target.Pos);
+			projectile.Vel = distance / 4;
+		}
+		else {
+			A_SpawnProjectile(enemy_projectile);
+		}
+	}
+	States
+	{
+		Spawn:
+			TNT1 A 0 A_StartSound("cyber/sight");
+			Goto See;
+		See:
+			CYBR A 0 {
+				let player_close = A_CheckProximity("Missile", "FriendOfCyber", 128, 1, CPXF_SETTARGET);
+				if (TargetIsPlayer() && target.health < 100) {
+					return player_close;
+				}
+				return ResolveState(null);
+			}
+			CYBR A 2 A_Hoof;
+			CYBR ABBCC 2 A_Chase;
+			CYBR D 2 A_Metal;
+			CYBR D 2 A_Chase;
+			Loop;
+		Missile:
+			CYBR E 3 A_FaceTarget();
+			CYBR F 6 ThrowWhatever("SmolRocket", "Stimpack");
+			CYBR E 3 A_FaceTarget();
+			CYBR F 6 ThrowWhatever("SmolRocket", "Stimpack");
+			CYBR E 3 A_FaceTarget();
+			CYBR F 6 ThrowWhatever("SmolRocket", "Stimpack");
+			Goto See;
+	}
+}
+
+class SmolRocket : Rocket
+{
+	Default
+	{
+		Scale 0.5;
+	}
+}
+
+class CyberdemonSummoner : Weapon
+{
+	Default
+	{
+		Weapon.KickBack 1000;
+		Tag "Cyberdemon Summoner";
+	}
+	States
+	{
+		Ready:
+			PUNG A 1 A_WeaponReady();
+			Loop;
+		Deselect:
+			PUNG A 1 A_Lower();
+			Loop;
+		Select:
+			PUNG A 1 A_Raise();
+			Loop;
+		Fire:
+			PUNG B 2;
+			PUNG C 2
+			{
+				if (CountInv("PowerStrength")) {
+					for (int x = -20; x <= 20; x+=5) {
+						A_FireProjectile("CyberdemonSpawner", x, false, 0, -15);
+					}
+				}
+				else {
+					A_FireProjectile("CyberdemonSpawner", 0, false, 0, -15);
+				}
+			}
+			PUNG D 4;
+			TNT1 A 0 A_ReFire();
+			PUNG CB 2;
+			Goto Ready;
+	}
+}
+
+class CyberdemonRetractor : Weapon replaces Chainsaw
+{
+	Default
+	{
+		Weapon.Kickback 0;
+		Weapon.UpSound "weapons/sawup";
+		Weapon.ReadySound "weapons/sawidle";
+		Tag "Cyberdemon Retractor";
+		+WEAPON.MELEEWEAPON
+	}
+	States
+	{
+		Ready:
+			SAWG CD 4 A_WeaponReady();
+			Loop;
+		Deselect:
+			SAWG C 1 A_Lower();
+			Loop;
+		Select:
+			SAWG C 1 A_Raise();
+			Loop;
+		Fire:
+			SAWG AB 4 A_Saw("weapons/sawfull", "weapons/sawhit", 140, "RetractPuff");
+			SAWG B 0 A_ReFire();
+			Goto Ready;
+		AltFire:
+			SAWG AB 1 
+			{
+				A_PlaySound("weapons/sawfull", CHAN_WEAPON);
+				A_DamageChildren(70, "Retract");
+			}
+			SAWG B 0 A_ReFire();
+			Goto Ready;
+		Spawn:
+			CSAW A -1;
+			Stop;
+	}
+}
+
+class RetractPuff : BulletPuff
+{
+	Default
+	{
+		DamageType "Retract";
+	}
+}

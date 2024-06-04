@@ -1,0 +1,6 @@
+GameInfo
+{
+	PlayerClasses = "FriendOfCyber"
+}
+
+DamageType "Retract" {}
